@@ -9,6 +9,17 @@ from volumfeapy import postprocess
 from volumfeapy.element import Hex8, Tet4, Tet10, Wedge6, Pyramid5
 
 
+def _padded_range(values, pad_fraction: float = 0.08) -> list[float]:
+    arr = np.asarray(values, dtype=float)
+    v_min = float(arr.min())
+    v_max = float(arr.max())
+    span = v_max - v_min
+    if span < 1e-12:
+        span = max(abs(v_min), 1.0)
+    pad = span * pad_fraction
+    return [v_min - pad, v_max + pad]
+
+
 _HEX8_EDGES = [
     (0, 1), (1, 2), (2, 3), (3, 0),
     (4, 5), (5, 6), (6, 7), (7, 4),
@@ -73,8 +84,9 @@ def plot_mesh(model, show_node_ids: bool = True) -> go.Figure:
     fig.update_layout(
         title="Mesh 3D",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z",
-                   aspectmode="data"),
-        margin=dict(l=0, r=0, t=40, b=0),
+                   aspectmode="data",
+                   camera=dict(eye=dict(x=2.45, y=-2.2, z=1.55))),
+        margin=dict(l=20, r=20, t=50, b=20),
     )
     return fig
 
@@ -133,24 +145,8 @@ def _find_boundary_faces(model) -> list[tuple[int, tuple]]:
     return boundary
 
 
-def _face_color(u_mag_i: float, u_mag_j: float, u_mag_k: float,
-                u_min: float, u_max: float) -> str:
-    """Colore RGB basato sulla magnitudine media dello spostamento."""
-    avg = (u_mag_i + u_mag_j + u_mag_k) / 3.0
-    rng = u_max - u_min
-    if rng < 1e-30:
-        t = 0.5
-    else:
-        t = (avg - u_min) / rng
-    t = max(0.0, min(1.0, t))
-    r = int(59 + t * (220 - 59))
-    g = int(76 + (1.0 - abs(2 * t - 1)) * 140)
-    b = int(192 + (1 - t) * (50 - 192))
-    return f"rgb({r},{g},{b})"
-
-
 def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure:
-    """Mesh deformata 3D con facce colorate e trasparenza.
+    """Mesh deformata 3D colorata con riferimento trasparente.
 
     Parameters
     ----------
@@ -163,6 +159,19 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
     """
     model = result.model
     fig = go.Figure()
+
+    for el in model.elements.values():
+        coords = el._coords()
+        for i_e, j_e in _get_edges(el):
+            fig.add_trace(go.Scatter3d(
+                x=[coords[i_e, 0], coords[j_e, 0]],
+                y=[coords[i_e, 1], coords[j_e, 1]],
+                z=[coords[i_e, 2], coords[j_e, 2]],
+                mode="lines",
+                line=dict(color="rgba(70,70,70,0.24)", width=2, dash="dot"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
 
     deformed_coords: dict[int, np.ndarray] = {}
     u_magnitudes: dict[int, float] = {}
@@ -180,7 +189,7 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
 
     all_x, all_y, all_z = [], [], []
     all_i, all_j, all_k = [], [], []
-    face_colors = []
+    vertex_intensity = []
     offset = 0
 
     for eid, face_local in boundary:
@@ -194,33 +203,32 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
             all_x.append(dc[0])
             all_y.append(dc[1])
             all_z.append(dc[2])
+            vertex_intensity.append(u_magnitudes[nid])
         offset += len(face_global)
-
-        u_mags = [u_magnitudes[nid] for nid in face_global]
 
         if len(face_global) == 3:
             all_i.append(base)
             all_j.append(base + 1)
             all_k.append(base + 2)
-            face_colors.append(_face_color(u_mags[0], u_mags[1], u_mags[2],
-                                           u_min, u_max))
         elif len(face_global) == 4:
             all_i.extend([base, base])
             all_j.extend([base + 1, base + 3])
             all_k.extend([base + 2, base + 2])
-            c1 = _face_color(u_mags[0], u_mags[1], u_mags[2], u_min, u_max)
-            c2 = _face_color(u_mags[0], u_mags[3], u_mags[2], u_min, u_max)
-            face_colors.extend([c1, c2])
 
     if all_x:
         fig.add_trace(go.Mesh3d(
             x=all_x, y=all_y, z=all_z,
             i=all_i, j=all_j, k=all_k,
-            facecolor=face_colors,
+            intensity=vertex_intensity,
+            colorscale="RdYlBu",
+            cmin=u_min,
+            cmax=u_max if u_max - u_min > 1e-30 else u_min + 1.0,
+            colorbar=dict(title="|u| [m]"),
             opacity=opacity,
             flatshading=True,
             showlegend=False,
-            hoverinfo="skip",
+            hovertemplate="x=%{x:.3g}<br>y=%{y:.3g}<br>z=%{z:.3g}<br>|u|=%{customdata:.3e} m<extra></extra>",
+            customdata=vertex_intensity,
             lighting=dict(ambient=0.6, diffuse=0.4, specular=0.1),
         ))
 
@@ -241,28 +249,27 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
                 fig.add_trace(go.Scatter3d(
                     x=[da[0], db[0]], y=[da[1], db[1]], z=[da[2], db[2]],
                     mode="lines",
-                    line=dict(color="rgba(0,0,0,0.5)", width=2),
+                    line=dict(color="rgba(0,0,0,0.30)", width=1),
                     showlegend=False, hoverinfo="skip",
                 ))
 
-    for el in model.elements.values():
-        coords = el._coords()
-        edges = _get_edges(el)
-        for i_e, j_e in edges:
-            fig.add_trace(go.Scatter3d(
-                x=[coords[i_e, 0], coords[j_e, 0]],
-                y=[coords[i_e, 1], coords[j_e, 1]],
-                z=[coords[i_e, 2], coords[j_e, 2]],
-                mode="lines",
-                line=dict(color="rgba(180,180,180,0.3)", width=1, dash="dot"),
-                showlegend=False, hoverinfo="skip",
-            ))
+    ref_x = [node.x for node in model.nodes.values()]
+    ref_y = [node.y for node in model.nodes.values()]
+    ref_z = [node.z for node in model.nodes.values()]
 
     fig.update_layout(
         title=f"Deformata (scala {scale:g})",
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z",
-                   aspectmode="data"),
-        margin=dict(l=0, r=0, t=40, b=0),
+        scene=dict(
+            xaxis=dict(title="X", range=_padded_range([*ref_x, *all_x])),
+            yaxis=dict(title="Y", range=_padded_range([*ref_y, *all_y])),
+            zaxis=dict(title="Z", range=_padded_range([*ref_z, *all_z])),
+            aspectmode="data",
+            camera=dict(
+                projection=dict(type="orthographic"),
+                eye=dict(x=1.55, y=-1.65, z=1.1),
+            ),
+        ),
+        margin=dict(l=20, r=20, t=50, b=20),
     )
     return fig
 
@@ -314,11 +321,24 @@ def plot_stress(result, component: str = "von_mises",
 
 def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
               opacity: float = 0.7) -> go.Figure:
-    """Disegna la i-esima forma modale con mesh colorata e trasparenza."""
+    """Disegna la i-esima forma modale con riferimento trasparente."""
     model = modal_result.model
     phi_i = modal_result.phi[:, i]
 
     fig = go.Figure()
+
+    for el in model.elements.values():
+        coords = el._coords()
+        for i_e, j_e in _get_edges(el):
+            fig.add_trace(go.Scatter3d(
+                x=[coords[i_e, 0], coords[j_e, 0]],
+                y=[coords[i_e, 1], coords[j_e, 1]],
+                z=[coords[i_e, 2], coords[j_e, 2]],
+                mode="lines",
+                line=dict(color="rgba(70,70,70,0.24)", width=2, dash="dot"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
 
     deformed_coords: dict[int, np.ndarray] = {}
     u_magnitudes: dict[int, float] = {}
@@ -336,7 +356,7 @@ def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
 
     all_x, all_y, all_z = [], [], []
     all_i, all_j, all_k = [], [], []
-    face_colors = []
+    vertex_intensity = []
     offset = 0
 
     for eid, face_local in boundary:
@@ -350,33 +370,37 @@ def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
             all_x.append(dc[0])
             all_y.append(dc[1])
             all_z.append(dc[2])
+            vertex_intensity.append(u_magnitudes[nid])
         offset += len(face_global)
-
-        u_mags = [u_magnitudes[nid] for nid in face_global]
 
         if len(face_global) == 3:
             all_i.append(base)
             all_j.append(base + 1)
             all_k.append(base + 2)
-            face_colors.append(_face_color(u_mags[0], u_mags[1], u_mags[2],
-                                           u_min, u_max))
         elif len(face_global) == 4:
             all_i.extend([base, base])
             all_j.extend([base + 1, base + 3])
             all_k.extend([base + 2, base + 2])
-            c1 = _face_color(u_mags[0], u_mags[1], u_mags[2], u_min, u_max)
-            c2 = _face_color(u_mags[0], u_mags[3], u_mags[2], u_min, u_max)
-            face_colors.extend([c1, c2])
+
+    max_mode = max(vertex_intensity) if vertex_intensity else 1.0
+    if max_mode < 1e-30:
+        max_mode = 1.0
+    modal_index = [v / max_mode for v in vertex_intensity]
 
     if all_x:
         fig.add_trace(go.Mesh3d(
             x=all_x, y=all_y, z=all_z,
             i=all_i, j=all_j, k=all_k,
-            facecolor=face_colors,
+            intensity=modal_index,
+            colorscale="RdYlBu",
+            cmin=0.0,
+            cmax=1.0,
+            colorbar=dict(title="|phi| / max"),
             opacity=opacity,
             flatshading=True,
             showlegend=False,
-            hoverinfo="skip",
+            hovertemplate="x=%{x:.3g}<br>y=%{y:.3g}<br>z=%{z:.3g}<br>|phi|/max=%{customdata:.3f}<extra></extra>",
+            customdata=modal_index,
             lighting=dict(ambient=0.6, diffuse=0.4, specular=0.1),
         ))
 
@@ -397,15 +421,31 @@ def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
                 fig.add_trace(go.Scatter3d(
                     x=[da[0], db[0]], y=[da[1], db[1]], z=[da[2], db[2]],
                     mode="lines",
-                    line=dict(color="rgba(0,0,0,0.5)", width=2),
+                    line=dict(color="rgba(0,0,0,0.30)", width=1),
                     showlegend=False, hoverinfo="skip",
                 ))
 
+    ref_x = [node.x for node in model.nodes.values()]
+    ref_y = [node.y for node in model.nodes.values()]
+    ref_z = [node.z for node in model.nodes.values()]
+
     f = modal_result.freq[i]
+    mode_scene = dict(
+        xaxis=dict(title="X", range=_padded_range([*ref_x, *all_x])),
+        yaxis=dict(title="Y", range=_padded_range([*ref_y, *all_y])),
+        zaxis=dict(title="Z", range=_padded_range([*ref_z, *all_z])),
+        aspectmode="data",
+        camera=dict(
+            projection=dict(type="orthographic"),
+            eye=dict(x=1.55, y=-1.65, z=1.1),
+        ),
+    )
+    mode_margin = dict(l=20, r=20, t=50, b=20)
     fig.update_layout(
         title=f"Modo {i + 1} — f = {f:.3f} Hz" if f > 0 else f"Modo {i + 1}",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z",
                    aspectmode="data"),
         margin=dict(l=0, r=0, t=40, b=0),
     )
+    fig.update_layout(scene=mode_scene, margin=mode_margin)
     return fig
