@@ -63,6 +63,30 @@ for i in range(min(6, len(mr.freq))):
     plot_mode(mr, i=i, scale=100).show()
 ```
 
+### Forme modali
+
+Le seguenti immagini mostrano i primi quattro modi di vibrazione di una struttura solida 3D:
+
+#### Modo 1 — Fondamentale
+
+![Modo 1](images/mode_1.png)
+*Prima forma modale.*
+
+#### Modo 2
+
+![Modo 2](images/mode_2.png)
+*Seconda forma modale.*
+
+#### Modo 3
+
+![Modo 3](images/mode_3.png)
+*Terza forma modale.*
+
+#### Modo 4
+
+![Modo 4](images/mode_4.png)
+*Quarta forma modale.*
+
 ## Confronto analitico
 
 Per una mensola (L × b × h), la prima frequenza di flessione è:

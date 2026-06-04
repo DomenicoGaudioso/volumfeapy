@@ -57,6 +57,38 @@ print(f"uz FEM   = {res.displacement(5, 'uz'):.6e} m")
 print(f"uz exact = {u_exact:.6e} m")
 ```
 
+## Visualization
+
+After solving, you can visualize the mesh and results:
+
+```python
+from volumfeapy.plotting import plot_mesh, plot_deformed, plot_stress
+
+plot_mesh(m).show()
+plot_deformed(res, scale=100).show()
+plot_stress(res, "von_mises").show()
+```
+
+### Mesh
+
+![Cube Hex8 mesh](images/mesh_cube_hex8.png)
+*4×4×4 hexahedral mesh of a unit cube.*
+
+### Deformed shape
+
+![Cube deformed](images/deformed_cube_hex8.png)
+*Deformed shape (scale 100×) under uniaxial tension.*
+
+### Von Mises stress
+
+![Cube von Mises](images/stress_von_mises_cube.png)
+*Von Mises equivalent stress [Pa] contour plot.*
+
+### Normal stress σzz
+
+![Cube σzz](images/stress_szz_cube.png)
+*Normal stress σzz [Pa] contour plot.*
+
 ## Next steps
 
 - [Structural Model](en-03-structural-model.md) — nodes, materials, elements

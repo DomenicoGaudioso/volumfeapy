@@ -62,6 +62,30 @@ for i in range(min(6, len(mr.freq))):
     plot_mode(mr, i=i, scale=100).show()
 ```
 
+### Mode shapes
+
+The following images show the first four vibration modes of a 3D solid structure:
+
+#### Mode 1 — Fundamental
+
+![Mode 1](images/mode_1.png)
+*First mode shape.*
+
+#### Mode 2
+
+![Mode 2](images/mode_2.png)
+*Second mode shape.*
+
+#### Mode 3
+
+![Mode 3](images/mode_3.png)
+*Third mode shape.*
+
+#### Mode 4
+
+![Mode 4](images/mode_4.png)
+*Fourth mode shape.*
+
 ## Analytical comparison
 
 For a cantilever beam (L × b × h), the first bending frequency is:

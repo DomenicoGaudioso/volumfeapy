@@ -57,6 +57,38 @@ print(f"uz FEM   = {res.displacement(5, 'uz'):.6e} m")
 print(f"uz esatto = {u_exact:.6e} m")
 ```
 
+## Visualizzazione
+
+Dopo la soluzione, puoi visualizzare la mesh e i risultati:
+
+```python
+from volumfeapy.plotting import plot_mesh, plot_deformed, plot_stress
+
+plot_mesh(m).show()
+plot_deformed(res, scale=100).show()
+plot_stress(res, "von_mises").show()
+```
+
+### Mesh
+
+![Mesh cubo Hex8](images/mesh_cube_hex8.png)
+*Mesh esaedrica 4×4×4 di un cubo unitario.*
+
+### Forma deformata
+
+![Cubo deformato](images/deformed_cube_hex8.png)
+*Forma deformata (scala 100×) sotto trazione uniassiale.*
+
+### Tensione di von Mises
+
+![Von Mises cubo](images/stress_von_mises_cube.png)
+*Mappa di contorno della tensione equivalente di von Mises [Pa].*
+
+### Tensione normale σzz
+
+![σzz cubo](images/stress_szz_cube.png)
+*Mappa di contorno della tensione normale σzz [Pa].*
+
 ## Prossimi passi
 
 - [Modello Strutturale](it-03-structural-model.md) — nodi, materiali, elementi

@@ -114,3 +114,39 @@ print(f"σ3 = {vals[2]:.3e} Pa")
 eid, vm_max = postprocess.max_von_mises(res)
 print(f"Max σ_VM = {vm_max:.3e} Pa at element {eid}")
 ```
+
+## Visualization examples
+
+The following images show typical post-processing results for 3D solid models.
+
+### Cantilever beam (Tet4 mesh)
+
+![Cantilever mesh](images/mesh_cantilever_tet4.png)
+*Tetrahedral mesh of a cantilever beam.*
+
+![Cantilever deformed](images/deformed_cantilever_tet4.png)
+*Deformed shape of a cantilever beam under tip load (scale 100×).*
+
+![Cantilever von Mises](images/stress_von_mises_cantilever.png)
+*Von Mises stress [Pa] in a cantilever beam. Maximum at the fixed end.*
+
+### Stress components
+
+The `plot_stress` function can display any stress component:
+
+```python
+from volumfeapy.plotting import plot_stress
+
+# Normal stresses
+plot_stress(res, "sxx").show()
+plot_stress(res, "syy").show()
+plot_stress(res, "szz").show()
+
+# Shear stresses
+plot_stress(res, "txy").show()
+plot_stress(res, "tyz").show()
+plot_stress(res, "txz").show()
+
+# Von Mises
+plot_stress(res, "von_mises").show()
+```

@@ -114,3 +114,39 @@ print(f"σ3 = {vals[2]:.3e} Pa")
 eid, vm_max = postprocess.max_von_mises(res)
 print(f"Max σ_VM = {vm_max:.3e} Pa all'elemento {eid}")
 ```
+
+## Esempi di visualizzazione
+
+Le seguenti immagini mostrano risultati tipici di post-processing per solidi 3D.
+
+### Mensola (mesh Tet4)
+
+![Mesh mensola](images/mesh_cantilever_tet4.png)
+*Mesh tetraedrica di una mensola.*
+
+![Mensola deformata](images/deformed_cantilever_tet4.png)
+*Forma deformata di una mensola sotto carico in punta (scala 100×).*
+
+![Von Mises mensola](images/stress_von_mises_cantilever.png)
+*Tensione di von Mises [Pa] in una mensola. Massimo all'incastro.*
+
+### Componenti di tensione
+
+La funzione `plot_stress` può visualizzare qualsiasi componente di tensione:
+
+```python
+from volumfeapy.plotting import plot_stress
+
+# Tensioni normali
+plot_stress(res, "sxx").show()
+plot_stress(res, "syy").show()
+plot_stress(res, "szz").show()
+
+# Tensioni tangenziali
+plot_stress(res, "txy").show()
+plot_stress(res, "tyz").show()
+plot_stress(res, "txz").show()
+
+# Von Mises
+plot_stress(res, "von_mises").show()
+```
