@@ -143,6 +143,25 @@ def test_principal_stresses():
     assert abs(vals[2] - 0.0) < 1e-10
 
 
+def test_plot_stress_subdivides_boundary_faces():
+    m = _single_hex8()
+    for nid in [1, 2, 3, 4]:
+        m.fix(nid)
+    for nid in [5, 6, 7, 8]:
+        m.add_nodal_load(nid, Fz=250.0)
+
+    res = m.solve()
+
+    from volumfeapy.plotting import plot_stress
+    fig = plot_stress(res, "szz", subdivisions=2)
+
+    mesh = fig.data[0]
+    assert mesh.type == "mesh3d"
+    assert len(mesh.x) > 8
+    assert len(mesh.i) > 12
+    assert len(mesh.customdata) == len(mesh.x)
+
+
 def test_wedge6_volume():
     m = Model()
     m.add_node(1, 0, 0, 0)

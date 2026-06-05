@@ -45,7 +45,7 @@ plot_deformed(res, scale=100).show()
 Il modello indeformato e' disegnato come riferimento trasparente; la mesh
 deformata e' colorata in base alla norma reale dello spostamento `|u|`.
 
-### plot_stress(result, component="von_mises", title=None)
+### plot_stress(result, component="von_mises", title=None, subdivisions=5)
 
 Mappa a colori 3D delle tensioni sulle facce esterne visibili della mesh:
 
@@ -54,6 +54,9 @@ from volumfeapy.plotting import plot_stress
 
 # Tensione di von Mises
 plot_stress(res, "von_mises").show()
+
+# Contour visivo piu' morbido su ogni faccia esterna dell'elemento
+plot_stress(res, "von_mises", subdivisions=8).show()
 
 # Tensioni normali
 plot_stress(res, "sxx").show()
@@ -69,7 +72,8 @@ Componenti disponibili: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
 Le tensioni sono recuperate ai nodi dell'elemento dove la formulazione lo
 consente, mediate sui nodi condivisi della mesh e interpolate sulle facce
 esterne. In questo modo si ottiene un contour FEM continuo sulla pelle reale
-della mesh, non marker isolati.
+della mesh, non marker isolati. Il parametro `subdivisions` raffina solo la
+superficie di visualizzazione; la colorbar mantiene le tensioni reali.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

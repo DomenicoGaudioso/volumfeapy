@@ -45,7 +45,7 @@ plot_deformed(res, scale=100).show()
 The undeformed model is drawn as a transparent reference wireframe; the
 deformed mesh is colored by the real displacement norm `|u|`.
 
-### plot_stress(result, component="von_mises", title=None)
+### plot_stress(result, component="von_mises", title=None, subdivisions=5)
 
 3D stress contour map on the visible boundary faces of the mesh:
 
@@ -54,6 +54,9 @@ from volumfeapy.plotting import plot_stress
 
 # Von Mises stress
 plot_stress(res, "von_mises").show()
+
+# Smoother visual contour on each external element face
+plot_stress(res, "von_mises", subdivisions=8).show()
 
 # Normal stresses
 plot_stress(res, "sxx").show()
@@ -69,7 +72,8 @@ Available components: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
 Stress values are recovered at element nodes where the element formulation
 allows it, averaged at shared mesh nodes, and interpolated across the external
 faces. This gives a continuous FEM-style contour on the actual mesh skin
-instead of isolated center markers.
+instead of isolated center markers. The `subdivisions` parameter only refines
+the display surface; the colorbar keeps the real stress values.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

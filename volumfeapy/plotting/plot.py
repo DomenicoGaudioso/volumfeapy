@@ -101,6 +101,13 @@ _TET4_FACES = [
     (0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3),
 ]
 
+_TET10_FACE_NODES = {
+    (0, 1, 2): (0, 1, 2, 4, 5, 6),
+    (0, 1, 3): (0, 1, 3, 4, 8, 7),
+    (1, 2, 3): (1, 2, 3, 5, 9, 8),
+    (0, 2, 3): (0, 2, 3, 6, 9, 7),
+}
+
 _WEDGE6_FACES = [
     (0, 1, 2), (3, 4, 5),
     (0, 1, 4, 3), (1, 2, 5, 4), (2, 0, 3, 5),
@@ -224,6 +231,157 @@ def _nodal_stress_values(result, component: str) -> dict[int, float]:
             counts[nid] = counts.get(nid, 0) + 1
 
     return {nid: sums[nid] / counts[nid] for nid in sums}
+
+
+def _quad_shape(s: float, t: float) -> np.ndarray:
+    return np.array([
+        0.25 * (1.0 - s) * (1.0 - t),
+        0.25 * (1.0 + s) * (1.0 - t),
+        0.25 * (1.0 + s) * (1.0 + t),
+        0.25 * (1.0 - s) * (1.0 + t),
+    ])
+
+
+def _tri6_shape(l1: float, l2: float, l3: float) -> np.ndarray:
+    return np.array([
+        l1 * (2.0 * l1 - 1.0),
+        l2 * (2.0 * l2 - 1.0),
+        l3 * (2.0 * l3 - 1.0),
+        4.0 * l1 * l2,
+        4.0 * l2 * l3,
+        4.0 * l3 * l1,
+    ])
+
+
+def _hex8_shape(xi: float, eta: float, zeta: float) -> np.ndarray:
+    signs = np.array([
+        (-1.0, -1.0, -1.0), (1.0, -1.0, -1.0),
+        (1.0, 1.0, -1.0), (-1.0, 1.0, -1.0),
+        (-1.0, -1.0, 1.0), (1.0, -1.0, 1.0),
+        (1.0, 1.0, 1.0), (-1.0, 1.0, 1.0),
+    ])
+    return 0.125 * (
+        (1.0 + signs[:, 0] * xi)
+        * (1.0 + signs[:, 1] * eta)
+        * (1.0 + signs[:, 2] * zeta)
+    )
+
+
+def _hex8_face_natural(face_local: tuple[int, ...], s: float,
+                       t: float) -> tuple[float, float, float]:
+    if face_local == (0, 1, 2, 3):
+        return s, t, -1.0
+    if face_local == (4, 7, 6, 5):
+        return s, t, 1.0
+    if face_local == (0, 4, 5, 1):
+        return s, -1.0, t
+    if face_local == (1, 5, 6, 2):
+        return 1.0, s, t
+    if face_local == (2, 6, 7, 3):
+        return s, 1.0, t
+    if face_local == (3, 7, 4, 0):
+        return -1.0, s, t
+    raise ValueError(f"Faccia Hex8 non riconosciuta: {face_local}")
+
+
+def _linear_face_sample(el, face_nodes: tuple[int, ...],
+                        weights: np.ndarray,
+                        nodal_values: dict[int, float]) -> tuple[np.ndarray, float]:
+    coords = el._coords()[list(face_nodes)]
+    values = np.array([nodal_values[el.node_ids[i]] for i in face_nodes])
+    return weights @ coords, float(weights @ values)
+
+
+def _stress_face_sample(el, face_local: tuple[int, ...], sample: tuple[float, ...],
+                        nodal_values: dict[int, float]) -> tuple[np.ndarray, float]:
+    coords = el._coords()
+    values = np.array([nodal_values[nid] for nid in el.node_ids])
+
+    if isinstance(el, Hex8):
+        s, t = sample
+        xi, eta, zeta = _hex8_face_natural(face_local, s, t)
+        weights = _hex8_shape(xi, eta, zeta)
+        return weights @ coords, float(weights @ values)
+
+    if isinstance(el, Tet10):
+        face_nodes = _TET10_FACE_NODES[tuple(face_local)]
+        l1, l2, l3 = sample
+        weights = _tri6_shape(l1, l2, l3)
+        return _linear_face_sample(el, face_nodes, weights, nodal_values)
+
+    if len(face_local) == 4:
+        s, t = sample
+        weights = _quad_shape(s, t)
+        return _linear_face_sample(el, face_local, weights, nodal_values)
+
+    l1, l2, l3 = sample
+    weights = np.array([l1, l2, l3])
+    return _linear_face_sample(el, face_local, weights, nodal_values)
+
+
+def _add_quad_contour_face(el, face_local: tuple[int, ...], subdivisions: int,
+                           nodal_values: dict[int, float],
+                           all_x: list, all_y: list, all_z: list,
+                           all_i: list, all_j: list, all_k: list,
+                           face_values: list) -> None:
+    grid: list[list[int]] = []
+    for a in range(subdivisions + 1):
+        row = []
+        s = -1.0 + 2.0 * a / subdivisions
+        for b in range(subdivisions + 1):
+            t = -1.0 + 2.0 * b / subdivisions
+            point, value = _stress_face_sample(el, face_local, (s, t),
+                                               nodal_values)
+            row.append(len(all_x))
+            all_x.append(float(point[0]))
+            all_y.append(float(point[1]))
+            all_z.append(float(point[2]))
+            face_values.append(value)
+        grid.append(row)
+
+    for a in range(subdivisions):
+        for b in range(subdivisions):
+            p00 = grid[a][b]
+            p10 = grid[a + 1][b]
+            p11 = grid[a + 1][b + 1]
+            p01 = grid[a][b + 1]
+            all_i.extend([p00, p00])
+            all_j.extend([p10, p11])
+            all_k.extend([p11, p01])
+
+
+def _add_tri_contour_face(el, face_local: tuple[int, ...], subdivisions: int,
+                          nodal_values: dict[int, float],
+                          all_x: list, all_y: list, all_z: list,
+                          all_i: list, all_j: list, all_k: list,
+                          face_values: list) -> None:
+    nodes: dict[tuple[int, int], int] = {}
+    for i in range(subdivisions + 1):
+        for j in range(subdivisions + 1 - i):
+            l1 = i / subdivisions
+            l2 = j / subdivisions
+            l3 = 1.0 - l1 - l2
+            point, value = _stress_face_sample(el, face_local, (l1, l2, l3),
+                                               nodal_values)
+            nodes[(i, j)] = len(all_x)
+            all_x.append(float(point[0]))
+            all_y.append(float(point[1]))
+            all_z.append(float(point[2]))
+            face_values.append(value)
+
+    for i in range(subdivisions):
+        for j in range(subdivisions - i):
+            p = nodes[(i, j)]
+            pi = nodes[(i + 1, j)]
+            pj = nodes[(i, j + 1)]
+            all_i.append(p)
+            all_j.append(pi)
+            all_k.append(pj)
+            if j < subdivisions - i - 1:
+                pij = nodes[(i + 1, j + 1)]
+                all_i.append(pi)
+                all_j.append(pij)
+                all_k.append(pj)
 
 
 def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure:
@@ -356,11 +514,16 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
 
 
 def plot_stress(result, component: str = "von_mises",
-                title: str | None = None) -> go.Figure:
-    """Mappa a colori delle tensioni sulle facce esterne della mesh."""
+                title: str | None = None, subdivisions: int = 5) -> go.Figure:
+    """Mappa a colori delle tensioni sulle facce esterne della mesh.
+
+    Le facce sono suddivise in triangoli di visualizzazione e colorate
+    interpolando i valori tensionali nodali. La legenda resta nei valori reali.
+    """
     model = result.model
     fig = go.Figure()
 
+    subdivisions = max(1, int(subdivisions))
     nodal_values = _nodal_stress_values(result, component)
     values = list(nodal_values.values())
     v_min = min(values) if values else 0.0
@@ -372,29 +535,19 @@ def plot_stress(result, component: str = "von_mises",
     all_x, all_y, all_z = [], [], []
     all_i, all_j, all_k = [], [], []
     face_values = []
-    offset = 0
 
     for eid, face_local in boundary:
         el = model.elements[eid]
-        local_node_ids = el.node_ids
-        coords = el._coords()
-        base = offset
-        for local_idx in face_local:
-            nid = local_node_ids[local_idx]
-            all_x.append(float(coords[local_idx, 0]))
-            all_y.append(float(coords[local_idx, 1]))
-            all_z.append(float(coords[local_idx, 2]))
-            face_values.append(nodal_values[nid])
-        offset += len(face_local)
-
-        if len(face_local) == 3:
-            all_i.append(base)
-            all_j.append(base + 1)
-            all_k.append(base + 2)
-        elif len(face_local) == 4:
-            all_i.extend([base, base])
-            all_j.extend([base + 1, base + 3])
-            all_k.extend([base + 2, base + 2])
+        if len(face_local) == 4:
+            _add_quad_contour_face(
+                el, face_local, subdivisions, nodal_values,
+                all_x, all_y, all_z, all_i, all_j, all_k, face_values,
+            )
+        else:
+            _add_tri_contour_face(
+                el, face_local, subdivisions, nodal_values,
+                all_x, all_y, all_z, all_i, all_j, all_k, face_values,
+            )
 
     if all_x:
         fig.add_trace(go.Mesh3d(
@@ -406,7 +559,7 @@ def plot_stress(result, component: str = "von_mises",
             cmax=v_max,
             colorbar=dict(title=component),
             opacity=0.92,
-            flatshading=True,
+            flatshading=False,
             showlegend=False,
             customdata=face_values,
             hovertemplate=(

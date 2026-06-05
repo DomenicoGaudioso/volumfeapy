@@ -142,5 +142,5 @@ Requires the `plot` extra (`plotly`, `kaleido`). Each function returns a
 
 - **`plot_mesh(model, show_node_ids=True)`** — 3D mesh with edges and node IDs.
 - **`plot_deformed(result, scale=1.0)`** — 3D deformed mesh.
-- **`plot_stress(result, component="von_mises")`** — 3D stress contour.
+- **`plot_stress(result, component="von_mises", subdivisions=5)`** — 3D stress contour with subdivided external faces.
 - **`plot_mode(modal_result, i=0, scale=1.0)`** — i-th mode shape.
