@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Union
 
 import numpy as np
 
@@ -20,7 +21,7 @@ from .loads import (
 from .material import Material
 from .node import Node
 
-ElementType = Hex8 | Tet4 | Tet10 | Wedge6 | Pyramid5
+ElementType = Union[Hex8, Tet4, Tet10, Wedge6, Pyramid5]
 
 
 @dataclass
