@@ -25,6 +25,7 @@ A Python finite-element solver for the **static and modal analysis** of **3D sol
 - **Modal analysis** (natural frequencies, periods, mode shapes)
 - **Post-processing**: stresses (σxx, σyy, σzz, τxy, τyz, τxz), von Mises, principal stresses
 - **Plotly plots**: mesh, deformed shape, stress contour maps, mode shapes
+- **Gmsh meshing**: optional automatic Tet4/Tet10 mesh generation
 - **Load cases**: assign loads to cases; solve combinations with coefficients
 - **Sparse solver** for large models
 
@@ -35,6 +36,7 @@ pip install -e ".[all]"
 ```
 
 **Requirements:** Python >= 3.9, numpy >= 1.24, scipy >= 1.10
+Use `pip install -e ".[mesh]"` for Gmsh-based automatic meshing.
 
 ## Quick Start
 
@@ -133,6 +135,16 @@ plot_deformed(res, scale=100).show()
 plot_stress(res, "von_mises").show()
 ```
 
+### Gmsh Meshing
+
+```python
+from volumfeapy import Material
+from volumfeapy.meshing import mesh_box_tet
+
+mat = Material(E=210e9, nu=0.3)
+m = mesh_box_tet(mat, lx=1.0, ly=0.4, lz=0.3, mesh_size=0.15, order=1)
+```
+
 ## Conventions
 
 - **Nodal DOFs**: `[ux, uy, uz]` (translations in global X, Y, Z)
@@ -151,6 +163,7 @@ volumfeapy/
 │   ├── integration.py    # Gauss quadrature (3D, tet, wedge)
 │   ├── model.py          # Model: assembly, constraints, solution
 │   ├── postprocess.py    # stresses, von Mises, principal stresses
+│   ├── meshing/          # optional Gmsh mesh generation
 │   └── plotting/         # Plotly visualizations
 ├── examples/             # basic examples
 ├── tests/                # pytest tests

@@ -34,14 +34,16 @@ pip install -e .
 | Extra | Pacchetti | Descrizione |
 |-------|-----------|-------------|
 | `plot` | plotly, kaleido | Grafici interattivi Plotly |
-| `all` | plotly, kaleido | Tutto |
-| `dev` | plotly, kaleido, pytest | Sviluppo + test |
+| `mesh` | gmsh | Generazione automatica della mesh |
+| `all` | plotly, kaleido, gmsh | Tutto |
+| `dev` | plotly, kaleido, gmsh, pytest | Sviluppo + test |
 
 Esempio:
 
 ```bash
 pip install -e ".[all]"       # tutto
 pip install -e ".[plot]"      # solo grafici
+pip install -e ".[mesh]"      # solo meshing Gmsh
 ```
 
 ## Verifica installazione
@@ -66,6 +68,14 @@ L'extra `plot` non è installato. Eseguire:
 
 ```bash
 pip install -e ".[all]"
+```
+
+### ImportError: gmsh non trovato
+
+L'extra `mesh` non e' installato. Eseguire:
+
+```bash
+pip install -e ".[mesh]"
 ```
 
 ### ValueError: Jacobiano singolare

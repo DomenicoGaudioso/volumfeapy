@@ -15,6 +15,7 @@ Typical import:
 from volumfeapy import Model, Material
 from volumfeapy import postprocess
 from volumfeapy.plotting import (plot_mesh, plot_deformed, plot_stress, plot_mode)
+from volumfeapy.meshing import mesh_box_tet
 ```
 
 ---
@@ -144,3 +145,13 @@ Requires the `plot` extra (`plotly`, `kaleido`). Each function returns a
 - **`plot_deformed(result, scale=1.0)`** — 3D deformed mesh.
 - **`plot_stress(result, component="von_mises", subdivisions=5)`** — 3D stress contour with subdivided external faces.
 - **`plot_mode(modal_result, i=0, scale=1.0)`** — i-th mode shape.
+
+---
+
+## Meshing (`volumfeapy.meshing`)
+
+Requires the `mesh` extra (`gmsh`). These helpers generate or import a mesh
+and return a normal `Model`.
+
+- **`mesh_box_tet(material, lx, ly, lz, mesh_size, order=1)`** — Gmsh tetrahedral box mesh (`order=1` Tet4, `order=2` Tet10).
+- **`from_gmsh(material, dim=3)`** — convert the active Gmsh model mesh to supported volumetric elements.
