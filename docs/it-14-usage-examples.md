@@ -17,6 +17,27 @@ funzionalità principali.
 | 01 | `01_convergence_hex8.py` | Studio di convergenza: Hex8 trazione uniassiale |
 | 02 | `02_cantilever_convergence.py` | Mensola con raffinamento mesh Tet4 |
 
+## Casi studio dalla letteratura
+
+Un set completo di **9 casi benchmark classici della letteratura FEM**
+e' disponibile nella directory `casestudies/`, con documentazione
+completa e immagini nel sito web. Ogni caso e' confrontato con una
+soluzione analitica o semianalitica di riferimento.
+
+| # | Caso | Riferimento |
+|---|------|-------------|
+| CS01 | Cubo in trazione uniassiale (Hex8) | Cook et al. §2 |
+| CS02 | Mensola 3D (Tet4) | Euler-Bernoulli |
+| CS03 | Cubo sotto pressione idrostatica | Lamé / modulo volumetrico |
+| CS04 | Lastra con foro circolare (Kirsch) | K_t = 3 |
+| CS05 | Cubo con peso proprio | sigma_zz = -rho g z |
+| CS06 | Cubo con carico termico | Espansione libera |
+| CS07 | Patch test (campo lineare) | Esatto per costruzione |
+| CS08 | Confronto elementi (Hex8/Tet4/Wedge6) | Studio di convergenza |
+| CS09 | Analisi modale cubo Hex8 | Frequenze naturali |
+
+→ [Esplora tutti i casi studio]({{ site.baseurl }}/casestudies/)
+
 ## Esecuzione esempi
 
 ```bash

@@ -147,6 +147,24 @@ class Hex8:
                 f[3 * i:3 * i + 3] += w * N[i] * b * abs(detJ)
         return f
 
+    def equivalent_thermal_load(self, dT: float) -> np.ndarray:
+        """Forze nodali equivalenti per un incremento termico uniforme dT.
+
+        f_th = integral_V B^T D eps_th dV  con  eps_th = alpha dT (1,1,1,0,0,0)^T
+        """
+        from .integration import gauss_legendre_3d
+        alpha = self.material.alpha
+        if alpha == 0.0:
+            return np.zeros(24)
+        D = self.material.D_matrix()
+        eps_th = alpha * dT * np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
+        f = np.zeros(24)
+        xi_g, eta_g, zeta_g, w_g = gauss_legendre_3d(2, 2, 2)
+        for xi, eta, zeta, w in zip(xi_g, eta_g, zeta_g, w_g):
+            B, detJ = self._B_matrix(xi, eta, zeta)
+            f += w * (B.T @ D @ eps_th) * abs(detJ)
+        return f
+
     def stress_at(self, xi: float, eta: float, zeta: float,
                   u_elem: np.ndarray) -> np.ndarray:
         """Tensioni [sxx, syy, szz, txy, tyz, txz] al punto (xi, eta, zeta)."""

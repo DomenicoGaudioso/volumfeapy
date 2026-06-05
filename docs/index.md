@@ -82,6 +82,27 @@ fig.show()
 | Hex8 convergence | `usage_examples/01_convergence_hex8.py` | Mesh refinement against the closed-form axial deformation |
 | Cantilever convergence | `usage_examples/02_cantilever_convergence.py` | Tet4 convergence trend against Euler-Bernoulli beam theory |
 
+## Literature Case Studies
+
+A complete set of **9 classical FEM benchmark cases** has been
+implemented and compared with analytical solutions. Each case study
+is documented in the documentation site with model construction,
+3D deformed shape, stress contours, and numerical verification.
+
+[View all case studies →]({{ site.baseurl }}/casestudies/)
+
+| # | Case | Reference |
+|---|------|-----------|
+| CS01 | Cube in uniaxial tension (Hex8) | Cook et al. §2 |
+| CS02 | 3D cantilever beam (Tet4) | Euler-Bernoulli |
+| CS03 | Cube under hydrostatic pressure | Lamé / bulk modulus |
+| CS04 | Plate with circular hole (Kirsch) | K_t = 3 |
+| CS05 | Cube under self-weight (gravity) | sigma_zz = -rho g z |
+| CS06 | Cube under thermal load | Free expansion |
+| CS07 | Patch test (linear field) | Exact by construction |
+| CS08 | Element comparison (Hex8/Tet4/Wedge6) | Convergence study |
+| CS09 | Modal analysis of Hex8 cube | Natural frequencies |
+
 Use `scale` only to make the deformed geometry readable in the figure. The
 reported displacements, hover values and color legend remain unscaled analysis
 results.

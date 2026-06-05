@@ -254,15 +254,14 @@ class Model:
             fac = self._factor(tl, factors)
             if fac:
                 el = self.elements[tl.elem]
-                alpha = el.material.alpha
-                E = el.material.E
-                nu = el.material.nu
-                beta = E * alpha / (1 - 2 * nu)
-                eps_th = np.array([beta * tl.dT, beta * tl.dT, beta * tl.dT, 0, 0, 0])
-                D = el.material.D_matrix()
-                if isinstance(el, Tet4):
+                if hasattr(el, "equivalent_thermal_load"):
+                    feq = el.equivalent_thermal_load(tl.dT)
+                elif isinstance(el, Tet4):
+                    alpha = el.material.alpha
+                    D = el.material.D_matrix()
+                    eps_th = alpha * tl.dT * np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
                     B, vol6 = el._B_matrix()
-                    feq = (vol6 / 6.0) * (B.T @ D @ np.linalg.solve(D, eps_th))
+                    feq = (vol6 / 6.0) * (B.T @ D @ eps_th)
                 else:
                     feq = np.zeros(el.n_dof)
                 F[el.global_dofs(self.dof_map)] += fac * feq

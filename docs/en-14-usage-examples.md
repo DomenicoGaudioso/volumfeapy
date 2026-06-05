@@ -16,6 +16,28 @@ The `usage_examples/` directory contains self-contained scripts covering key fea
 | 01 | `01_convergence_hex8.py` | Convergence study: Hex8 uniaxial tension |
 | 02 | `02_cantilever_convergence.py` | Cantilever beam with Tet4 mesh refinement |
 
+## Literature Case Studies
+
+A complete set of **9 classical FEM benchmark cases** is available in
+the `casestudies/` directory, with full documentation and images on the
+website. Each case study is compared with an analytical reference
+solution from the literature (Euler-Bernoulli beam, Lamé, Kirsch,
+etc.).
+
+| # | Case | Reference |
+|---|------|-----------|
+| CS01 | Cube in uniaxial tension (Hex8) | Cook et al. §2 |
+| CS02 | 3D cantilever beam (Tet4) | Euler-Bernoulli |
+| CS03 | Cube under hydrostatic pressure | Lamé / bulk modulus |
+| CS04 | Plate with circular hole (Kirsch) | K_t = 3 |
+| CS05 | Cube under self-weight (gravity) | sigma_zz = -rho g z |
+| CS06 | Cube under thermal load | Free expansion |
+| CS07 | Patch test (linear field) | Exact by construction |
+| CS08 | Element comparison (Hex8/Tet4/Wedge6) | Convergence study |
+| CS09 | Modal analysis of Hex8 cube | Natural frequencies |
+
+→ [Browse all case studies]({{ site.baseurl }}/casestudies/)
+
 ## Running examples
 
 ```bash
