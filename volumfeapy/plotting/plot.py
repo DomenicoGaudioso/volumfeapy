@@ -276,45 +276,106 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
 
 def plot_stress(result, component: str = "von_mises",
                 title: str | None = None) -> go.Figure:
-    """Mappa a colori delle tensioni (valore al centro di ogni elemento)."""
+    """Mappa a colori delle tensioni sulle facce esterne della mesh."""
     model = result.model
     fig = go.Figure()
 
-    for el in model.elements.values():
-        coords = el._coords()
-        edges = _get_edges(el)
-        for i, j in edges:
-            fig.add_trace(go.Scatter3d(
-                x=[coords[i, 0], coords[j, 0]],
-                y=[coords[i, 1], coords[j, 1]],
-                z=[coords[i, 2], coords[j, 2]],
-                mode="lines", line=dict(color="#ccc", width=2),
-                showlegend=False,
-            ))
-
-    centers_x, centers_y, centers_z, values = [], [], [], []
+    stress_by_elem = {}
     for eid, el in model.elements.items():
-        coords = el._coords()
-        center = coords.mean(axis=0)
         s = postprocess.element_stresses(result, eid)
-        centers_x.append(center[0])
-        centers_y.append(center[1])
-        centers_z.append(center[2])
-        values.append(s[component])
+        stress_by_elem[eid] = float(s[component])
 
-    fig.add_trace(go.Scatter3d(
-        x=centers_x, y=centers_y, z=centers_z,
-        mode="markers",
-        marker=dict(size=8, color=values, colorscale="RdYlBu",
-                    colorbar=dict(title=component)),
-        showlegend=False,
-    ))
+    values = list(stress_by_elem.values())
+    v_min = min(values) if values else 0.0
+    v_max = max(values) if values else 1.0
+    if v_max - v_min < 1e-30:
+        v_max = v_min + 1.0
+
+    boundary = _find_boundary_faces(model)
+    all_x, all_y, all_z = [], [], []
+    all_i, all_j, all_k = [], [], []
+    face_values = []
+    offset = 0
+
+    for eid, face_local in boundary:
+        el = model.elements[eid]
+        coords = el._coords()
+        base = offset
+        for local_idx in face_local:
+            all_x.append(float(coords[local_idx, 0]))
+            all_y.append(float(coords[local_idx, 1]))
+            all_z.append(float(coords[local_idx, 2]))
+            face_values.append(stress_by_elem[eid])
+        offset += len(face_local)
+
+        if len(face_local) == 3:
+            all_i.append(base)
+            all_j.append(base + 1)
+            all_k.append(base + 2)
+        elif len(face_local) == 4:
+            all_i.extend([base, base])
+            all_j.extend([base + 1, base + 3])
+            all_k.extend([base + 2, base + 2])
+
+    if all_x:
+        fig.add_trace(go.Mesh3d(
+            x=all_x, y=all_y, z=all_z,
+            i=all_i, j=all_j, k=all_k,
+            intensity=face_values,
+            colorscale="RdYlBu",
+            cmin=v_min,
+            cmax=v_max,
+            colorbar=dict(title=component),
+            opacity=0.92,
+            flatshading=True,
+            showlegend=False,
+            customdata=face_values,
+            hovertemplate=(
+                "x=%{x:.3g}<br>y=%{y:.3g}<br>z=%{z:.3g}<br>"
+                f"{component}=%{{customdata:.3e}}<extra></extra>"
+            ),
+            lighting=dict(ambient=0.65, diffuse=0.35, specular=0.05),
+        ))
+
+    edge_set: set[tuple] = set()
+    for eid, face_local in boundary:
+        el = model.elements[eid]
+        local_node_ids = el.node_ids
+        coords = el._coords()
+        face_global = [local_node_ids[f] for f in face_local]
+        nf = len(face_global)
+        for ii in range(nf):
+            jj = (ii + 1) % nf
+            a, b = face_global[ii], face_global[jj]
+            edge = (min(a, b), max(a, b))
+            if edge in edge_set:
+                continue
+            edge_set.add(edge)
+            local_a = face_local[ii]
+            local_b = face_local[jj]
+            fig.add_trace(go.Scatter3d(
+                x=[coords[local_a, 0], coords[local_b, 0]],
+                y=[coords[local_a, 1], coords[local_b, 1]],
+                z=[coords[local_a, 2], coords[local_b, 2]],
+                mode="lines",
+                line=dict(color="rgba(0,0,0,0.28)", width=1),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
 
     fig.update_layout(
         title=title or f"Tensioni: {component}",
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z",
-                   aspectmode="data"),
-        margin=dict(l=0, r=0, t=40, b=0),
+        scene=dict(
+            xaxis=dict(title="X", range=_padded_range(all_x)),
+            yaxis=dict(title="Y", range=_padded_range(all_y)),
+            zaxis=dict(title="Z", range=_padded_range(all_z)),
+            aspectmode="data",
+            camera=dict(
+                projection=dict(type="orthographic"),
+                eye=dict(x=1.55, y=-1.65, z=1.1),
+            ),
+        ),
+        margin=dict(l=20, r=20, t=50, b=20),
     )
     return fig
 

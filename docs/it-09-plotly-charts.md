@@ -42,11 +42,12 @@ from volumfeapy.plotting import plot_deformed
 plot_deformed(res, scale=100).show()
 ```
 
-La forma deformata è disegnata in rosso, la non deformata in grigio chiaro (tratteggiata).
+Il modello indeformato e' disegnato come riferimento trasparente; la mesh
+deformata e' colorata in base alla norma reale dello spostamento `|u|`.
 
 ### plot_stress(result, component="von_mises", title=None)
 
-Mappa a colori 3D delle tensioni (valore al centro dell'elemento):
+Mappa a colori 3D delle tensioni sulle facce esterne visibili della mesh:
 
 ```python
 from volumfeapy.plotting import plot_stress
@@ -64,6 +65,11 @@ plot_stress(res, "txy").show()
 ```
 
 Componenti disponibili: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
+
+Le tensioni sono comunque recuperate per elemento al centro dell'elemento;
+per la visualizzazione, il valore viene poi dipinto su ogni faccia esterna
+di quell'elemento. In questo modo il campo tensionale si legge sulla pelle
+reale della mesh, non come marker isolati.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

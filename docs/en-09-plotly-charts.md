@@ -42,11 +42,12 @@ from volumfeapy.plotting import plot_deformed
 plot_deformed(res, scale=100).show()
 ```
 
-The deformed shape is drawn in red, the undeformed in light gray (dotted).
+The undeformed model is drawn as a transparent reference wireframe; the
+deformed mesh is colored by the real displacement norm `|u|`.
 
 ### plot_stress(result, component="von_mises", title=None)
 
-3D stress contour map (value at element center):
+3D stress contour map on the visible boundary faces of the mesh:
 
 ```python
 from volumfeapy.plotting import plot_stress
@@ -65,8 +66,9 @@ plot_stress(res, "txy").show()
 
 Available components: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
 
-The stress is displayed as a color-coded scatter plot at element centers,
-with element edges drawn in light gray.
+Stress values are still recovered per element at the element center, then
+painted on each external face of that element. This makes the stress field
+readable on the actual mesh skin instead of as isolated center markers.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 
