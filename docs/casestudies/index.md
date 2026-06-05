@@ -68,7 +68,7 @@ anche standalone con `python casestudies/csNN_*.py`.
 | CS09 Modal cube        | qualitativo | Frequenze 5-15 kHz |
 | CS10 Pyramid5          | qualitativo | Elemento piramidale caricato all'apice |
 | CS11 Mesh mista        | qualitativo | Tutti gli elementi 3D nello stesso modello |
-| CS12 Ciminiera solida  | qualitativo | Hex8 cilindrico, max u_radiale = 3.0069e-03 m |
+| CS12 Ciminiera solida  | qualitativo | Hex8 cilindrico, max u_radiale = 3.3069e-03 m |
 
 Per i casi con errore elevato (CS02, CS03, CS04), le cause sono note
 nella letteratura FEM e richiedono mesh adattate, elementi di ordine

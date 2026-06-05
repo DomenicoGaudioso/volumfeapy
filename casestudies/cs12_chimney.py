@@ -51,7 +51,7 @@ def _quad_area(points: list[np.ndarray]) -> float:
     )
 
 
-def build_chimney_solid(ntheta: int = 12, nz: int = 12):
+def build_chimney_solid(ntheta: int = 24, nz: int = 16):
     """Costruisce la ciminiera solida come mesh Hex8 cilindrica."""
     H = 60.0
     r_base = 3.0
@@ -154,6 +154,24 @@ def radial_displacement(result, nid: int, theta: float) -> float:
     return float(u @ er)
 
 
+def frame_chimney_figure(fig):
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(title="X", range=[-4.2, 4.2]),
+            yaxis=dict(title="Y", range=[-4.2, 4.2]),
+            zaxis=dict(title="Z", range=[0.0, 60.0]),
+            aspectmode="manual",
+            aspectratio=dict(x=1.0, y=1.0, z=1.45),
+            camera=dict(
+                projection=dict(type="orthographic"),
+                eye=dict(x=1.8, y=-2.4, z=0.35),
+            ),
+        ),
+        margin=dict(l=10, r=10, t=50, b=10),
+    )
+    return fig
+
+
 def main() -> None:
     m, meta = build_chimney_solid()
     res = m.solve()
@@ -188,20 +206,20 @@ def main() -> None:
     print_check("max von Mises", max_vm, None)
     print_check("equilibrio Fx R+F", base_reaction_fx + total_fx, 0.0, tol=0.02)
 
-    save_figure(plot_mesh(m, show_node_ids=False), "cs12_chimney_mesh.png",
-                width=950, height=650, title="Mesh solida ciminiera")
-    save_figure(plot_supports(m), "cs12_chimney_supports.png",
-                width=950, height=650, title="Vincoli ciminiera solida")
-    save_figure(plot_deformed(res, scale=40), "cs12_chimney_deformed.png",
-                width=950, height=650, title="Deformata ciminiera solida (scala 40x)")
-    save_figure(plot_stress(res, "von_mises", subdivisions=3),
-                "cs12_chimney_vm.png", width=950, height=650,
+    save_figure(frame_chimney_figure(plot_mesh(m, show_node_ids=False)), "cs12_chimney_mesh.png",
+                width=950, height=900, title="Mesh solida ciminiera")
+    save_figure(frame_chimney_figure(plot_supports(m)), "cs12_chimney_supports.png",
+                width=950, height=900, title="Vincoli ciminiera solida")
+    save_figure(frame_chimney_figure(plot_deformed(res, scale=40)), "cs12_chimney_deformed.png",
+                width=950, height=900, title="Deformata ciminiera solida (scala 40x)")
+    save_figure(frame_chimney_figure(plot_stress(res, "von_mises", subdivisions=3)),
+                "cs12_chimney_vm.png", width=950, height=900,
                 title="von Mises ciminiera solida")
-    save_figure(plot_stress(res, "sxx", subdivisions=3),
-                "cs12_chimney_sxx.png", width=950, height=650,
+    save_figure(frame_chimney_figure(plot_stress(res, "sxx", subdivisions=3)),
+                "cs12_chimney_sxx.png", width=950, height=900,
                 title="sigma_xx ciminiera solida")
-    save_figure(plot_reactions(res), "cs12_chimney_reactions.png",
-                width=950, height=650, title="Reazioni vincolari")
+    save_figure(frame_chimney_figure(plot_reactions(res)), "cs12_chimney_reactions.png",
+                width=950, height=900, title="Reazioni vincolari")
     print("  Immagini salvate in casestudies/images/")
 
 
