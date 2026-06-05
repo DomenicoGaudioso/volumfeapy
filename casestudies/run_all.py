@@ -28,6 +28,7 @@ def main():
         ("CS09 - Analisi modale cubo",        "cs09_modal_cube"),
         ("CS10 - Elemento Pyramid5",          "cs10_pyramid_element"),
         ("CS11 - Mesh mista 3D",              "cs11_mixed_elements"),
+        ("CS12 - Ciminiera solida",           "cs12_chimney"),
     ]
 
     for label, module_name in cases:

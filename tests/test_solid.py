@@ -244,3 +244,17 @@ def test_pyramid5_volume():
     m.add_pyramid5(1, [1, 2, 3, 4, 5], mat)
     el = m.elements[1]
     assert el.volume() > 0
+
+
+def test_chimney_case_builds_supported_loaded_solid():
+    from casestudies.cs12_chimney import build_chimney_solid
+
+    m, meta = build_chimney_solid(ntheta=8, nz=6)
+    base_nodes = [nid for nid, node in m.nodes.items() if abs(node.z) < 1e-12]
+
+    assert len(m.elements) < 8 * 6
+    assert base_nodes
+    assert m.nodal_loads
+    assert all(len(set(m.dof_map[nid]).intersection(m._prescribed)) == 3
+               for nid in base_nodes)
+    assert meta["outer_faces"]
