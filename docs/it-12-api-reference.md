@@ -143,7 +143,7 @@ Richiede l'extra `plot` (`plotly`, `kaleido`). Ogni funzione restituisce un
 
 - **`plot_mesh(model, show_node_ids=True)`** — mesh 3D con bordi e ID nodi.
 - **`plot_deformed(result, scale=1.0)`** — mesh deformata 3D.
-- **`plot_stress(result, component="von_mises", subdivisions=5)`** — contorno tensioni 3D con facce esterne suddivise.
+- **`plot_stress(result, component="von_mises", subdivisions=5, opacity=1.0, show_isolines=True)`** — contorno tensioni 3D con facce esterne suddivise e iso-linee.
 - **`plot_mode(modal_result, i=0, scale=1.0)`** — i-esima forma modale.
 
 ---

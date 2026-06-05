@@ -186,6 +186,22 @@ def test_plot_stress_subdivides_boundary_faces():
     assert len(mesh.customdata) == len(mesh.x)
 
 
+def test_plot_stress_adds_isolines_and_opaque_default():
+    m = _single_hex8()
+    for nid in [1, 2, 3, 4]:
+        m.fix(nid)
+    for nid in [5, 6, 7, 8]:
+        m.add_nodal_load(nid, Fz=250.0)
+
+    res = m.solve()
+
+    from volumfeapy.plotting import plot_stress
+    fig = plot_stress(res, "von_mises", subdivisions=2, n_isolines=4)
+
+    assert fig.data[0].opacity == 1.0
+    assert any(trace.type == "scatter3d" for trace in fig.data[1:])
+
+
 def test_wedge6_volume():
     m = Model()
     m.add_node(1, 0, 0, 0)

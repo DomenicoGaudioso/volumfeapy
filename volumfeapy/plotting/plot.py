@@ -20,6 +20,76 @@ def _padded_range(values, pad_fraction: float = 0.08) -> list[float]:
     return [v_min - pad, v_max + pad]
 
 
+def _contour_levels(v_min: float, v_max: float, count: int) -> list[float]:
+    if count <= 0 or v_max - v_min < 1e-30:
+        return []
+    return np.linspace(v_min, v_max, count + 2)[1:-1].tolist()
+
+
+def _edge_level_point(pa: np.ndarray, pb: np.ndarray, va: float, vb: float,
+                      level: float) -> np.ndarray | None:
+    da = va - level
+    db = vb - level
+    if abs(da) < 1e-30 and abs(db) < 1e-30:
+        return None
+    if da * db > 0:
+        return None
+    if abs(vb - va) < 1e-30:
+        return None
+    t = (level - va) / (vb - va)
+    if t < -1e-12 or t > 1.0 + 1e-12:
+        return None
+    return pa + np.clip(t, 0.0, 1.0) * (pb - pa)
+
+
+def _triangle_isoline_points(points: list[np.ndarray], values: list[float],
+                             level: float) -> tuple[np.ndarray, np.ndarray] | None:
+    intersections = []
+    for a, b in ((0, 1), (1, 2), (2, 0)):
+        point = _edge_level_point(points[a], points[b], values[a], values[b], level)
+        if point is not None:
+            intersections.append(point)
+    unique = []
+    for point in intersections:
+        if not any(np.linalg.norm(point - other) < 1e-10 for other in unique):
+            unique.append(point)
+    if len(unique) < 2:
+        return None
+    return unique[0], unique[1]
+
+
+def _add_isoline_trace_3d(fig: go.Figure, x: list[float], y: list[float],
+                          z: list[float], i: list[int], j: list[int],
+                          k: list[int], values: list[float],
+                          levels: list[float],
+                          color: str = "rgba(0,0,0,0.90)",
+                          width: float = 4.0) -> None:
+    line_x, line_y, line_z = [], [], []
+    coords = [np.array([xv, yv, zv], dtype=float) for xv, yv, zv in zip(x, y, z)]
+    for level in levels:
+        for ia, ib, ic in zip(i, j, k):
+            segment = _triangle_isoline_points(
+                [coords[ia], coords[ib], coords[ic]],
+                [values[ia], values[ib], values[ic]],
+                level,
+            )
+            if segment is None:
+                continue
+            p0, p1 = segment
+            line_x.extend([float(p0[0]), float(p1[0]), None])
+            line_y.extend([float(p0[1]), float(p1[1]), None])
+            line_z.extend([float(p0[2]), float(p1[2]), None])
+    if line_x:
+        fig.add_trace(go.Scatter3d(
+            x=line_x, y=line_y, z=line_z,
+            mode="lines",
+            line=dict(color=color, width=width),
+            name="Iso-linee",
+            showlegend=False,
+            hoverinfo="skip",
+        ))
+
+
 _HEX8_EDGES = [
     (0, 1), (1, 2), (2, 3), (3, 0),
     (4, 5), (5, 6), (6, 7), (7, 4),
@@ -384,7 +454,7 @@ def _add_tri_contour_face(el, face_local: tuple[int, ...], subdivisions: int,
                 all_k.append(pj)
 
 
-def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure:
+def plot_deformed(result, scale: float = 1.0, opacity: float = 1.0) -> go.Figure:
     """Mesh deformata 3D colorata con riferimento trasparente.
 
     Parameters
@@ -394,7 +464,7 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
     scale : float
         Fattore di scala per gli spostamenti.
     opacity : float
-        Trasparenza delle facce (0=trasparente, 1=opaco). Default 0.7.
+        Trasparenza delle facce (0=trasparente, 1=opaco). Default 1.0.
     """
     model = result.model
     fig = go.Figure()
@@ -514,11 +584,14 @@ def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure
 
 
 def plot_stress(result, component: str = "von_mises",
-                title: str | None = None, subdivisions: int = 5) -> go.Figure:
+                title: str | None = None, subdivisions: int = 5,
+                opacity: float = 1.0, show_isolines: bool = True,
+                n_isolines: int = 9) -> go.Figure:
     """Mappa a colori delle tensioni sulle facce esterne della mesh.
 
     Le facce sono suddivise in triangoli di visualizzazione e colorate
     interpolando i valori tensionali nodali. La legenda resta nei valori reali.
+    Le iso-linee separano fasce di uguale componente tensionale.
     """
     model = result.model
     fig = go.Figure()
@@ -558,7 +631,7 @@ def plot_stress(result, component: str = "von_mises",
             cmin=v_min,
             cmax=v_max,
             colorbar=dict(title=component),
-            opacity=0.92,
+            opacity=float(np.clip(opacity, 0.0, 1.0)),
             flatshading=False,
             showlegend=False,
             customdata=face_values,
@@ -568,6 +641,11 @@ def plot_stress(result, component: str = "von_mises",
             ),
             lighting=dict(ambient=0.65, diffuse=0.35, specular=0.05),
         ))
+        if show_isolines:
+            _add_isoline_trace_3d(
+                fig, all_x, all_y, all_z, all_i, all_j, all_k, face_values,
+                _contour_levels(v_min, v_max, n_isolines),
+            )
 
     edge_set: set[tuple] = set()
     for eid, face_local in boundary:
@@ -613,7 +691,7 @@ def plot_stress(result, component: str = "von_mises",
 
 
 def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
-              opacity: float = 0.7) -> go.Figure:
+              opacity: float = 1.0) -> go.Figure:
     """Disegna la i-esima forma modale con riferimento trasparente."""
     model = modal_result.model
     phi_i = modal_result.phi[:, i]

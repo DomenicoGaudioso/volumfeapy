@@ -266,10 +266,16 @@ def tab_risultati():
             what = st.radio("Visualizza", ["Deformata", "von_mises", "sxx", "syy", "szz"],
                             horizontal=True)
             scale = st.number_input("Scala deformata", value=100.0)
+            transparent = st.checkbox("Superficie trasparente", value=False)
+            show_isolines = st.checkbox("Mostra iso-linee", value=True)
+            opacity = 0.68 if transparent else 1.0
             if what == "Deformata":
-                fig = plot_deformed(res, scale=scale)
+                fig = plot_deformed(res, scale=scale, opacity=opacity)
             else:
-                fig = plot_stress(res, component=what)
+                fig = plot_stress(
+                    res, component=what, opacity=opacity,
+                    show_isolines=show_isolines,
+                )
             st.plotly_chart(fig, use_container_width=True)
         except Exception as exc:
             st.warning(f"Grafico non disponibile: {exc}")
@@ -292,9 +298,11 @@ def tab_risultati():
         modal = st.session_state.modal
         nmodes = len(modal.freq)
         mode = st.slider("Modo", 1, nmodes, 1) - 1
+        transparent = st.checkbox("Superficie trasparente", value=False)
         try:
             from volumfeapy.plotting import plot_mode
-            fig = plot_mode(modal, i=mode, scale=100.0)
+            fig = plot_mode(modal, i=mode, scale=100.0,
+                            opacity=0.68 if transparent else 1.0)
             st.plotly_chart(fig, use_container_width=True)
         except Exception as exc:
             st.warning(f"Grafico non disponibile: {exc}")

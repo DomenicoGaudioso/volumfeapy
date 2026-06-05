@@ -45,7 +45,7 @@ plot_deformed(res, scale=100).show()
 Il modello indeformato e' disegnato come riferimento trasparente; la mesh
 deformata e' colorata in base alla norma reale dello spostamento `|u|`.
 
-### plot_stress(result, component="von_mises", title=None, subdivisions=5)
+### plot_stress(result, component="von_mises", title=None, subdivisions=5, opacity=1.0, show_isolines=True)
 
 Mappa a colori 3D delle tensioni sulle facce esterne visibili della mesh:
 
@@ -57,6 +57,9 @@ plot_stress(res, "von_mises").show()
 
 # Contour visivo piu' morbido su ogni faccia esterna dell'elemento
 plot_stress(res, "von_mises", subdivisions=8).show()
+
+# Superficie opaca con fasce separate da iso-linee
+plot_stress(res, "von_mises", opacity=1.0, show_isolines=True).show()
 
 # Tensioni normali
 plot_stress(res, "sxx").show()
@@ -73,7 +76,9 @@ Le tensioni sono recuperate ai nodi dell'elemento dove la formulazione lo
 consente, mediate sui nodi condivisi della mesh e interpolate sulle facce
 esterne. In questo modo si ottiene un contour FEM continuo sulla pelle reale
 della mesh, non marker isolati. Il parametro `subdivisions` raffina solo la
-superficie di visualizzazione; la colorbar mantiene le tensioni reali.
+superficie di visualizzazione; la colorbar mantiene le tensioni reali. Le
+iso-linee sono calcolate intersecando i triangoli campionati delle facce con
+livelli tensionali equidistanti, quindi marcano la separazione tra fasce.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 
