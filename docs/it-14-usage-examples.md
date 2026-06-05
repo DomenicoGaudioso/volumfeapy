@@ -19,10 +19,11 @@ funzionalità principali.
 
 ## Casi studio dalla letteratura
 
-Un set completo di **9 casi benchmark classici della letteratura FEM**
+Un set completo di **11 casi FEM classici e didattici**
 e' disponibile nella directory `casestudies/`, con documentazione
 completa e immagini nel sito web. Ogni caso e' confrontato con una
-soluzione analitica o semianalitica di riferimento.
+soluzione analitica o semianalitica dove disponibile, oppure usato come
+esempio mirato di elemento e visualizzazione.
 
 | # | Caso | Riferimento |
 |---|------|-------------|
@@ -35,6 +36,8 @@ soluzione analitica o semianalitica di riferimento.
 | CS07 | Patch test (campo lineare) | Esatto per costruzione |
 | CS08 | Confronto elementi (Hex8/Tet4/Wedge6) | Studio di convergenza |
 | CS09 | Analisi modale cubo Hex8 | Frequenze naturali |
+| CS10 | Elemento Pyramid5 | Esempio dedicato piramidale |
+| CS11 | Modello misto 3D | Hex8, Tet4, Tet10, Wedge6, Pyramid5 |
 
 → [Esplora tutti i casi studio]({{ site.baseurl }}/casestudies/)
 

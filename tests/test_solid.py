@@ -97,6 +97,30 @@ def test_tet4_stresses_constant():
     assert s["von_mises"] >= 0
 
 
+def test_tet10_solve_single_element():
+    m = Model()
+    coords = [
+        (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1),
+        (0.5, 0, 0), (0.5, 0.5, 0), (0, 0.5, 0),
+        (0, 0, 0.5), (0.5, 0, 0.5), (0, 0.5, 0.5),
+    ]
+    for i, (x, y, z) in enumerate(coords, start=1):
+        m.add_node(i, x, y, z)
+    mat = Material(E=210e9, nu=0.3)
+    m.add_tet10(1, list(range(1, 11)), mat)
+
+    for nid in [1, 2, 3, 5, 6, 7]:
+        m.fix(nid)
+    m.add_nodal_load(4, Fz=-1000.0)
+    m.add_nodal_load(8, Fz=-500.0)
+    m.add_nodal_load(9, Fz=-500.0)
+    m.add_nodal_load(10, Fz=-500.0)
+
+    res = m.solve()
+    assert np.isfinite(res.U).all()
+    assert res.displacement(4, "uz") < 0
+
+
 def test_settlement():
     m = _single_hex8()
     for nid in [1, 2, 3, 4]:

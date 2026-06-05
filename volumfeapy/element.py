@@ -335,7 +335,10 @@ class Tet10:
         Jinv = np.linalg.inv(J)
 
         dNdL = self._shape_derivatives(L1, L2, L3, L4)
-        dNdxyz = dNdL @ Jinv
+        grad_l234 = Jinv
+        grad_l1 = -np.sum(grad_l234, axis=0)
+        grad_l = np.vstack([grad_l1, grad_l234])
+        dNdxyz = dNdL @ grad_l
 
         B = np.zeros((6, 30))
         for i in range(10):

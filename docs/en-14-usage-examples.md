@@ -18,11 +18,11 @@ The `usage_examples/` directory contains self-contained scripts covering key fea
 
 ## Literature Case Studies
 
-A complete set of **9 classical FEM benchmark cases** is available in
+A complete set of **11 classical and didactic FEM cases** is available in
 the `casestudies/` directory, with full documentation and images on the
 website. Each case study is compared with an analytical reference
 solution from the literature (Euler-Bernoulli beam, Lamé, Kirsch,
-etc.).
+etc.) or used as focused element-visualization examples.
 
 | # | Case | Reference |
 |---|------|-----------|
@@ -35,6 +35,8 @@ etc.).
 | CS07 | Patch test (linear field) | Exact by construction |
 | CS08 | Element comparison (Hex8/Tet4/Wedge6) | Convergence study |
 | CS09 | Modal analysis of Hex8 cube | Natural frequencies |
+| CS10 | Pyramid5 element | Dedicated pyramid example |
+| CS11 | Mixed 3D element model | Hex8, Tet4, Tet10, Wedge6, Pyramid5 |
 
 → [Browse all case studies]({{ site.baseurl }}/casestudies/)
 

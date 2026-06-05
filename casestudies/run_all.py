@@ -26,6 +26,8 @@ def main():
         ("CS07 - Patch test",                 "cs07_patch_test"),
         ("CS08 - Convergenza elementi",       "cs08_element_convergence"),
         ("CS09 - Analisi modale cubo",        "cs09_modal_cube"),
+        ("CS10 - Elemento Pyramid5",          "cs10_pyramid_element"),
+        ("CS11 - Mesh mista 3D",              "cs11_mixed_elements"),
     ]
 
     for label, module_name in cases:

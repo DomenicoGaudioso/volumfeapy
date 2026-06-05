@@ -32,6 +32,8 @@ idrostatica, body force, thermal load, modale).
 | [CS07](cs07-patch-test) | Patch test (campo lineare) | Esatto per costruzione |
 | [CS08](cs08-element-convergence) | Confronto Hex8 / Tet4 / Wedge6 | u_z = P L^3 / (3 E I) |
 | [CS09](cs09-modal-cube) | Analisi modale cubo Hex8 | Modi propri di vibrazione |
+| [CS10](cs10-pyramid-element) | Elemento piramidale Pyramid5 | Esempio dedicato Pyramid5 |
+| [CS11](cs11-mixed-elements) | Mesh mista con tutti gli elementi | Hex8, Tet4, Tet10, Wedge6, Pyramid5 |
 
 ## Esecuzione
 
@@ -63,6 +65,8 @@ anche standalone con `python casestudies/csNN_*.py`.
 | CS07 Patch test        | < 1e-12     | Superato |
 | CS08 Hex8 vs Tet4      | Hex8 14%, Tet4 39% | Tet4 e' noto rigido in flessione |
 | CS09 Modal cube        | qualitativo | Frequenze 5-15 kHz |
+| CS10 Pyramid5          | qualitativo | Elemento piramidale caricato all'apice |
+| CS11 Mesh mista        | qualitativo | Tutti gli elementi 3D nello stesso modello |
 
 Per i casi con errore elevato (CS02, CS03, CS04), le cause sono note
 nella letteratura FEM e richiedono mesh adattate, elementi di ordine
