@@ -6,6 +6,10 @@ description: "volumfeapy - Python FEM solver for 3D solid elements"
 permalink: /
 ---
 
+<div align="center">
+  <img src="img/Logo_VolumfeaPy.png" alt="volumfeapy Logo" width="216">
+</div>
+
 # volumfeapy
 
 Python finite-element solver for static and modal analysis of 3D solid
