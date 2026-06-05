@@ -66,10 +66,10 @@ plot_stress(res, "txy").show()
 
 Componenti disponibili: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
 
-Le tensioni sono comunque recuperate per elemento al centro dell'elemento;
-per la visualizzazione, il valore viene poi dipinto su ogni faccia esterna
-di quell'elemento. In questo modo il campo tensionale si legge sulla pelle
-reale della mesh, non come marker isolati.
+Le tensioni sono recuperate ai nodi dell'elemento dove la formulazione lo
+consente, mediate sui nodi condivisi della mesh e interpolate sulle facce
+esterne. In questo modo si ottiene un contour FEM continuo sulla pelle reale
+della mesh, non marker isolati.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

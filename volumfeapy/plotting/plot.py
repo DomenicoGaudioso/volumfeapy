@@ -145,6 +145,87 @@ def _find_boundary_faces(model) -> list[tuple[int, tuple]]:
     return boundary
 
 
+def _stress_component_value(sigma: np.ndarray, component: str) -> float:
+    keys = ("sxx", "syy", "szz", "txy", "tyz", "txz")
+    if component == "von_mises":
+        return postprocess.von_mises(sigma)
+    if component not in keys:
+        raise KeyError(f"Componente tensionale non valida: {component}")
+    return float(sigma[keys.index(component)])
+
+
+def _element_stress_at_local_node(el, local_idx: int, u_elem: np.ndarray,
+                                  component: str) -> float:
+    """Valore tensionale nel nodo locale, con fallback al centro elemento."""
+    try:
+        if isinstance(el, Hex8):
+            natural = [
+                (-1.0, -1.0, -1.0), (1.0, -1.0, -1.0),
+                (1.0, 1.0, -1.0), (-1.0, 1.0, -1.0),
+                (-1.0, -1.0, 1.0), (1.0, -1.0, 1.0),
+                (1.0, 1.0, 1.0), (-1.0, 1.0, 1.0),
+            ]
+            sigma = el.stress_at(*natural[local_idx], u_elem)
+        elif isinstance(el, Tet4):
+            sigma = el.stress_at(None, None, None, u_elem)
+        elif isinstance(el, Tet10):
+            natural = [
+                (1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0),
+                (0.0, 0.0, 1.0, 0.0), (0.0, 0.0, 0.0, 1.0),
+                (0.5, 0.5, 0.0, 0.0), (0.0, 0.5, 0.5, 0.0),
+                (0.5, 0.0, 0.5, 0.0), (0.5, 0.0, 0.0, 0.5),
+                (0.0, 0.5, 0.0, 0.5), (0.0, 0.0, 0.5, 0.5),
+            ]
+            sigma = el.stress_at(*natural[local_idx], u_elem)
+        elif isinstance(el, Wedge6):
+            natural = [
+                (1.0, 0.0, 0.0, -1.0), (0.0, 1.0, 0.0, -1.0),
+                (0.0, 0.0, 1.0, -1.0), (1.0, 0.0, 0.0, 1.0),
+                (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0),
+            ]
+            sigma = el.stress_at(*natural[local_idx], u_elem)
+        elif isinstance(el, Pyramid5):
+            natural = [
+                (-1.0, -1.0, -1.0), (1.0, -1.0, -1.0),
+                (1.0, 1.0, -1.0), (-1.0, 1.0, -1.0),
+                (0.0, 0.0, 0.95),
+            ]
+            sigma = el.stress_at(*natural[local_idx], u_elem)
+        else:
+            return 0.0
+    except Exception:
+        if isinstance(el, Hex8):
+            sigma = el.stress_at(0.0, 0.0, 0.0, u_elem)
+        elif isinstance(el, Tet4):
+            sigma = el.stress_at(None, None, None, u_elem)
+        elif isinstance(el, Tet10):
+            sigma = el.stress_at(0.25, 0.25, 0.25, 0.25, u_elem)
+        elif isinstance(el, Wedge6):
+            sigma = el.stress_at(1 / 3, 1 / 3, 1 / 3, 0.0, u_elem)
+        elif isinstance(el, Pyramid5):
+            sigma = el.stress_at(0.0, 0.0, 0.0, u_elem)
+        else:
+            sigma = np.zeros(6)
+    return _stress_component_value(sigma, component)
+
+
+def _nodal_stress_values(result, component: str) -> dict[int, float]:
+    """Media nodale dei valori tensionali calcolati dagli elementi adiacenti."""
+    sums: dict[int, float] = {}
+    counts: dict[int, int] = {}
+    model = result.model
+
+    for eid, el in model.elements.items():
+        ed = el.global_dofs(model.dof_map)
+        u_elem = result.U[ed]
+        for local_idx, nid in enumerate(el.node_ids):
+            value = _element_stress_at_local_node(el, local_idx, u_elem, component)
+            sums[nid] = sums.get(nid, 0.0) + value
+            counts[nid] = counts.get(nid, 0) + 1
+
+    return {nid: sums[nid] / counts[nid] for nid in sums}
+
+
 def plot_deformed(result, scale: float = 1.0, opacity: float = 0.7) -> go.Figure:
     """Mesh deformata 3D colorata con riferimento trasparente.
 
@@ -280,12 +361,8 @@ def plot_stress(result, component: str = "von_mises",
     model = result.model
     fig = go.Figure()
 
-    stress_by_elem = {}
-    for eid, el in model.elements.items():
-        s = postprocess.element_stresses(result, eid)
-        stress_by_elem[eid] = float(s[component])
-
-    values = list(stress_by_elem.values())
+    nodal_values = _nodal_stress_values(result, component)
+    values = list(nodal_values.values())
     v_min = min(values) if values else 0.0
     v_max = max(values) if values else 1.0
     if v_max - v_min < 1e-30:
@@ -299,13 +376,15 @@ def plot_stress(result, component: str = "von_mises",
 
     for eid, face_local in boundary:
         el = model.elements[eid]
+        local_node_ids = el.node_ids
         coords = el._coords()
         base = offset
         for local_idx in face_local:
+            nid = local_node_ids[local_idx]
             all_x.append(float(coords[local_idx, 0]))
             all_y.append(float(coords[local_idx, 1]))
             all_z.append(float(coords[local_idx, 2]))
-            face_values.append(stress_by_elem[eid])
+            face_values.append(nodal_values[nid])
         offset += len(face_local)
 
         if len(face_local) == 3:

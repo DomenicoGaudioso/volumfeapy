@@ -66,9 +66,10 @@ plot_stress(res, "txy").show()
 
 Available components: `sxx`, `syy`, `szz`, `txy`, `tyz`, `txz`, `von_mises`.
 
-Stress values are still recovered per element at the element center, then
-painted on each external face of that element. This makes the stress field
-readable on the actual mesh skin instead of as isolated center markers.
+Stress values are recovered at element nodes where the element formulation
+allows it, averaged at shared mesh nodes, and interpolated across the external
+faces. This gives a continuous FEM-style contour on the actual mesh skin
+instead of isolated center markers.
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 
