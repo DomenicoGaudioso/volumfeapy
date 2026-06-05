@@ -7,7 +7,7 @@ nav_order: 9
 
 # 09 - Plotly Charts
 
-volumfeapy provides 4 interactive visualization functions based on Plotly.
+volumfeapy provides 6 interactive visualization functions based on Plotly.
 
 ## Installation
 
@@ -79,6 +79,24 @@ instead of isolated center markers. The `subdivisions` parameter only refines
 the display surface; the colorbar keeps the real stress values. Iso-lines are
 drawn by intersecting the same sampled boundary triangles with equally spaced
 stress levels, so they mark the separation between color bands.
+
+### plot_supports(model)
+
+Constrained nodes and active DOFs:
+
+```python
+from volumfeapy.plotting import plot_supports
+plot_supports(m).show()
+```
+
+### plot_reactions(result, scale=None)
+
+Support reaction vectors:
+
+```python
+from volumfeapy.plotting import plot_reactions
+plot_reactions(res).show()
+```
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

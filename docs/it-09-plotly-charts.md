@@ -7,7 +7,7 @@ nav_order: 9
 
 # 09 - Grafici Plotly
 
-volumfeapy fornisce 4 funzioni di visualizzazione interattiva basate su Plotly.
+volumfeapy fornisce 6 funzioni di visualizzazione interattiva basate su Plotly.
 
 ## Installazione
 
@@ -79,6 +79,24 @@ della mesh, non marker isolati. Il parametro `subdivisions` raffina solo la
 superficie di visualizzazione; la colorbar mantiene le tensioni reali. Le
 iso-linee sono calcolate intersecando i triangoli campionati delle facce con
 livelli tensionali equidistanti, quindi marcano la separazione tra fasce.
+
+### plot_supports(model)
+
+Nodi vincolati e gradi di liberta' attivi:
+
+```python
+from volumfeapy.plotting import plot_supports
+plot_supports(m).show()
+```
+
+### plot_reactions(result, scale=None)
+
+Vettori di reazione vincolare:
+
+```python
+from volumfeapy.plotting import plot_reactions
+plot_reactions(res).show()
+```
 
 ### plot_mode(modal_result, i=0, scale=1.0)
 

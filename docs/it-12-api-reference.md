@@ -14,7 +14,10 @@ Import tipico:
 ```python
 from volumfeapy import Model, Material
 from volumfeapy import postprocess
-from volumfeapy.plotting import (plot_mesh, plot_deformed, plot_stress, plot_mode)
+from volumfeapy.plotting import (
+    plot_mesh, plot_deformed, plot_stress,
+    plot_supports, plot_reactions, plot_mode,
+)
 from volumfeapy.meshing import mesh_box_tet
 ```
 
@@ -144,6 +147,8 @@ Richiede l'extra `plot` (`plotly`, `kaleido`). Ogni funzione restituisce un
 - **`plot_mesh(model, show_node_ids=True)`** — mesh 3D con bordi e ID nodi.
 - **`plot_deformed(result, scale=1.0)`** — mesh deformata 3D.
 - **`plot_stress(result, component="von_mises", subdivisions=5, opacity=1.0, show_isolines=True)`** — contorno tensioni 3D con facce esterne suddivise e iso-linee.
+- **`plot_supports(model)`** — nodi vincolati e gradi di liberta' attivi.
+- **`plot_reactions(result, scale=None)`** — vettori di reazione vincolare.
 - **`plot_mode(modal_result, i=0, scale=1.0)`** — i-esima forma modale.
 
 ---

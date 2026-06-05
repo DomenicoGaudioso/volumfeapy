@@ -128,11 +128,16 @@ eid, vm_max = postprocess.max_von_mises(res)
 ### Plotting
 
 ```python
-from volumfeapy.plotting import plot_mesh, plot_deformed, plot_stress, plot_mode
+from volumfeapy.plotting import (
+    plot_mesh, plot_deformed, plot_stress,
+    plot_supports, plot_reactions, plot_mode,
+)
 
 plot_mesh(m).show()
+plot_supports(m).show()
 plot_deformed(res, scale=100).show()
 plot_stress(res, "von_mises").show()
+plot_reactions(res).show()
 ```
 
 ### Gmsh Meshing

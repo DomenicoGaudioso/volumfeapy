@@ -690,6 +690,99 @@ def plot_stress(result, component: str = "von_mises",
     return fig
 
 
+def _constrained_nodes(model) -> dict[int, list[str]]:
+    from volumfeapy.loads import DOF_NAMES
+
+    out: dict[int, list[str]] = {}
+    for nid, dofs in model.dof_map.items():
+        active = [
+            DOF_NAMES[i] for i, gi in enumerate(dofs)
+            if int(gi) in model._prescribed
+        ]
+        if active:
+            out[nid] = active
+    return out
+
+
+def plot_supports(model) -> go.Figure:
+    """Visualizza i nodi vincolati e la mesh di riferimento."""
+    fig = plot_mesh(model, show_node_ids=False)
+    supports = _constrained_nodes(model)
+    if supports:
+        xs = [model.nodes[nid].x for nid in supports]
+        ys = [model.nodes[nid].y for nid in supports]
+        zs = [model.nodes[nid].z for nid in supports]
+        text = [f"Nodo {nid}: {', '.join(dofs)}" for nid, dofs in supports.items()]
+        fig.add_trace(go.Scatter3d(
+            x=xs, y=ys, z=zs,
+            mode="markers",
+            marker=dict(size=7, color="#111", symbol="diamond"),
+            name="Vincoli",
+            text=text,
+            hovertemplate="%{text}<extra></extra>",
+        ))
+    fig.update_layout(title="Vincoli")
+    return fig
+
+
+def plot_reactions(result, scale: float | None = None) -> go.Figure:
+    """Visualizza le reazioni vincolari come vettori sui nodi vincolati."""
+    model = result.model
+    fig = plot_supports(model)
+    supports = _constrained_nodes(model)
+    vectors = {nid: result.reactions(nid) for nid in supports}
+    mags = {nid: float(np.linalg.norm(vec)) for nid, vec in vectors.items()}
+    max_mag = max(mags.values(), default=0.0)
+    if max_mag <= 1e-30:
+        fig.update_layout(title="Reazioni vincolari")
+        return fig
+
+    xs = [node.x for node in model.nodes.values()]
+    ys = [node.y for node in model.nodes.values()]
+    zs = [node.z for node in model.nodes.values()]
+    span = max(
+        max(xs) - min(xs) if xs else 1.0,
+        max(ys) - min(ys) if ys else 1.0,
+        max(zs) - min(zs) if zs else 1.0,
+        1.0,
+    )
+    vec_scale = scale if scale is not None else 0.18 * span / max_mag
+    line_x, line_y, line_z = [], [], []
+    head_x, head_y, head_z, labels = [], [], [], []
+    for nid, vec in vectors.items():
+        if mags[nid] <= 1e-12 * max_mag:
+            continue
+        c = model.nodes[nid].coords
+        tip = c + vec_scale * vec
+        line_x.extend([float(c[0]), float(tip[0]), None])
+        line_y.extend([float(c[1]), float(tip[1]), None])
+        line_z.extend([float(c[2]), float(tip[2]), None])
+        head_x.append(float(tip[0]))
+        head_y.append(float(tip[1]))
+        head_z.append(float(tip[2]))
+        labels.append(
+            f"Nodo {nid}<br>Rx={vec[0]:.3e}<br>Ry={vec[1]:.3e}<br>Rz={vec[2]:.3e}"
+        )
+    fig.add_trace(go.Scatter3d(
+        x=line_x, y=line_y, z=line_z,
+        mode="lines",
+        line=dict(color="#0f766e", width=5),
+        name="Reazioni",
+        hoverinfo="skip",
+    ))
+    fig.add_trace(go.Scatter3d(
+        x=head_x, y=head_y, z=head_z,
+        mode="markers",
+        marker=dict(size=4, color="#0f766e", symbol="circle"),
+        name="Punte reazioni",
+        text=labels,
+        hovertemplate="%{text}<extra></extra>",
+        showlegend=False,
+    ))
+    fig.update_layout(title="Reazioni vincolari")
+    return fig
+
+
 def plot_mode(modal_result, i: int = 0, scale: float = 1.0,
               opacity: float = 1.0) -> go.Figure:
     """Disegna la i-esima forma modale con riferimento trasparente."""

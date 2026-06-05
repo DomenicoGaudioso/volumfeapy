@@ -262,15 +262,24 @@ def tab_risultati():
     if last == "Statica" and st.session_state.result is not None:
         res = st.session_state.result
         try:
-            from volumfeapy.plotting import plot_deformed, plot_stress
-            what = st.radio("Visualizza", ["Deformata", "von_mises", "sxx", "syy", "szz"],
-                            horizontal=True)
+            from volumfeapy.plotting import (
+                plot_deformed, plot_reactions, plot_stress, plot_supports,
+            )
+            what = st.radio(
+                "Visualizza",
+                ["Deformata", "Vincoli", "Reazioni", "von_mises", "sxx", "syy", "szz"],
+                horizontal=True,
+            )
             scale = st.number_input("Scala deformata", value=100.0)
             transparent = st.checkbox("Superficie trasparente", value=False)
             show_isolines = st.checkbox("Mostra iso-linee", value=True)
             opacity = 0.68 if transparent else 1.0
             if what == "Deformata":
                 fig = plot_deformed(res, scale=scale, opacity=opacity)
+            elif what == "Vincoli":
+                fig = plot_supports(m)
+            elif what == "Reazioni":
+                fig = plot_reactions(res)
             else:
                 fig = plot_stress(
                     res, component=what, opacity=opacity,
