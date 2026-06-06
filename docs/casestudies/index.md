@@ -35,6 +35,7 @@ idrostatica, body force, thermal load, modale).
 | [CS10](cs10-pyramid-element) | Elemento piramidale Pyramid5 | Esempio dedicato Pyramid5 |
 | [CS11](cs11-mixed-elements) | Mesh mista con tutti gli elementi | Hex8, Tet4, Tet10, Wedge6, Pyramid5 |
 | [CS12](cs12-chimney) | Ciminiera solida rastremata | confronto con platefeapy CS13 |
+| [CS13](cs13-box-girder) | Cassone sottile volumetrico | confronto con platefeapy CS14 |
 
 ## Esecuzione
 
@@ -67,8 +68,9 @@ anche standalone con `python casestudies/csNN_*.py`.
 | CS08 Hex8 vs Tet4      | Hex8 14%, Tet4 39% | Tet4 e' noto rigido in flessione |
 | CS09 Modal cube        | qualitativo | Frequenze 5-15 kHz |
 | CS10 Pyramid5          | qualitativo | Elemento piramidale caricato all'apice |
-| CS11 Mesh mista        | qualitativo | Tutti gli elementi 3D nello stesso modello |
+| CS11 Mesh mista        | qualitativo | Spalla/plinto unico con tutti gli elementi 3D |
 | CS12 Ciminiera solida  | qualitativo | Hex8 cilindrico, max u_radiale = 3.3069e-03 m |
+| CS13 Cassone solido    | ~12% vs shell | Hex8 sottile confrontato con platefeapy CS14 |
 
 Per i casi con errore elevato (CS02, CS03, CS04), le cause sono note
 nella letteratura FEM e richiedono mesh adattate, elementi di ordine

@@ -258,3 +258,31 @@ def test_chimney_case_builds_supported_loaded_solid():
     assert all(len(set(m.dof_map[nid]).intersection(m._prescribed)) == 3
                for nid in base_nodes)
     assert meta["outer_faces"]
+
+
+def test_mixed_case_is_single_positive_volume_object():
+    from casestudies.cs11_mixed_elements import build_mixed_model
+
+    mat = Material(E=30e9, nu=0.22)
+    m, eid_by_name = build_mixed_model(mat)
+
+    assert set(eid_by_name) == {"Hex8", "Wedge6", "Pyramid5", "Tet4", "Tet10"}
+    assert all(m.elements[eid].volume() > 0.0 for eid in eid_by_name.values())
+    assert len(m.nodes) < 30
+
+
+def test_box_girder_solid_builds_thin_walled_volume():
+    from casestudies.cs13_box_girder import build_box_girder_solid
+
+    m, meta = build_box_girder_solid(nx=4, n_width=1, n_height=1)
+    xs = [node.x for node in m.nodes.values()]
+    ys = [node.y for node in m.nodes.values()]
+    zs = [node.z for node in m.nodes.values()]
+
+    assert len(m.elements) == 16
+    assert min(xs) == 0.0
+    assert max(xs) == meta["L"]
+    assert min(ys) < 0.0 < max(ys)
+    assert min(zs) < 0.0 < max(zs)
+    assert meta["fixed_nodes"]
+    assert meta["tip_nodes"]

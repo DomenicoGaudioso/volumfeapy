@@ -29,6 +29,7 @@ def main():
         ("CS10 - Elemento Pyramid5",          "cs10_pyramid_element"),
         ("CS11 - Mesh mista 3D",              "cs11_mixed_elements"),
         ("CS12 - Ciminiera solida",           "cs12_chimney"),
+        ("CS13 - Cassone volumetrico",        "cs13_box_girder"),
     ]
 
     for label, module_name in cases:

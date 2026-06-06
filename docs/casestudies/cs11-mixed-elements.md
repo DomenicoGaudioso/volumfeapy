@@ -1,28 +1,27 @@
 ---
 layout: default
-title: "CS11 - Mesh mista 3D"
+title: "CS11 - Spalla/plinto misto 3D"
 parent: Casi studio - volumfeapy
 nav_order: 61
 permalink: /casestudies/cs11-mixed-elements/
 ---
 
-# CS11 - Tutti gli elementi volumetrici in un unico oggetto
+# CS11 - Spalla/plinto con tutti gli elementi volumetrici
 
 ## Obiettivo
 
-Questo caso studio costruisce un unico corpo con tutti gli elementi volumetrici
-implementati in **volumfeapy**:
+Questo caso studio costruisce un piccolo oggetto ingegneristico in calcestruzzo:
+una spalla/plinto con corpo principale, rampa laterale, copertura piramidale e
+contrafforti. Non e' una collezione di provini separati: tutti gli elementi
+condividono nodi o facce e vengono assemblati nella stessa matrice globale.
 
-- **Hex8**
-- **Tet4**
-- **Tet10**
-- **Wedge6**
-- **Pyramid5**
+Gli elementi usati nello stesso modello sono:
 
-Il modello non e' una collezione di provini separati: Hex8, Pyramid5, Tet4,
-Tet10 e Wedge6 condividono nodi o facce del nucleo e vengono assemblati nella
-stessa matrice globale. Il caso e' volutamente compatto per rendere leggibile
-la connessione tra elementi diversi, i vincoli e le reazioni vincolari.
+- **Hex8** per il blocco principale;
+- **Wedge6** per la rampa/prisma laterale;
+- **Pyramid5** per la copertura rastremata;
+- **Tet4** per un contrafforte laterale lineare;
+- **Tet10** per un contrafforte laterale quadratico.
 
 ## Visualizzazione
 
@@ -41,36 +40,34 @@ la connessione tra elementi diversi, i vincoli e le reazioni vincolari.
 Il contour tensionale usa i valori nodali recuperati e li interpola sulle facce
 esterne. Per Tet10 vengono usati anche i nodi intermedi della faccia, quindi il
 plot segue la logica quadratica dell'elemento. Le iso-linee aiutano a leggere
-le fasce di tensione anche quando la superficie non e' trasparente.
+le fasce di tensione anche con superfici opache.
 
 ## Modello
 
 ```python
-from volumfeapy import Material, Model
-
 mat = Material(E=30e9, nu=0.22)
-m = Model()
+m, eid_by_name = build_mixed_model(mat)
 
-m.add_hex8(...)
-m.add_pyramid5(...)
-m.add_tet4(...)
-m.add_tet10(...)
-m.add_wedge6(...)
+for nid, node in m.nodes.items():
+    if abs(node.z) < 1e-12:
+        m.fix(nid)
 
-# Il corpo misto ha vincoli su nodi di base e carichi verticali distribuiti
-# sui nodi caratteristici dei diversi elementi.
+m.add_nodal_load(12, Fz=-18_000)
+m.add_nodal_load(11, Fz=-6_000)
+m.add_nodal_load(13, Fz=-4_000)
+m.add_nodal_load(14, Fz=-4_000)
 res = m.solve()
 ```
 
 ## Risultati
 
-| Elemento | Nodi | Volume [m3] | max \|u\| [m] | von Mises [Pa] |
-|----------|------|-------------|---------------|----------------|
-| Hex8 | 8 | 1.0000e+00 | 1.2609e-06 | 2.3659e+04 |
-| Pyramid5 | 5 | 1.3333e-01 | 2.1629e-06 | 7.9399e+03 |
-| Tet4 | 4 | 1.0833e-01 | 2.4485e-06 | 6.6212e+04 |
-| Tet10 | 10 | 1.2500e-01 | 1.7158e-05 | 6.9365e+04 |
-| Wedge6 | 6 | 3.7500e-01 | 2.2942e-06 | 7.7059e+03 |
+| Elemento | Volume [m3] | max \|u\| [m] | von Mises [Pa] |
+|----------|-------------|---------------|----------------|
+| Hex8 | 6.4000e+00 | 4.1297e-07 | 4.4317e+03 |
+| Wedge6 | 8.7750e-01 | 5.7537e-07 | 6.0996e+03 |
+| Pyramid5 | 1.2667e+00 | 5.3223e-07 | 3.8336e+03 |
+| Tet4 | 5.0667e-01 | 1.0183e-06 | 1.3553e+04 |
+| Tet10 | 5.0667e-01 | 5.7773e-05 | 2.0929e+04 |
 
 ## Script
 
